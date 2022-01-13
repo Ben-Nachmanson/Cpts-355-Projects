@@ -3,7 +3,8 @@ from psElements import Value, StrConstant, ArrayConstant, FunctionBody
 
 
 class Stacks:
-    def __init__(self):
+    def __init__(self, scopeRule):
+        self.scopeRule = scopeRule  # string static or dynamic
         # stack variables
         # assuming top of the stack is the end of the list
         self.opstack = []
@@ -28,13 +29,11 @@ class Stacks:
             'count': self.count,
             'clear': self.clear,
             'exch': self.exch,
-            'dict': self.psDict,
-            'begin': self.begin,
-            'end': self.end,
             'def': self.psDef,
             'ifelse': self.psIfelse,
             'if': self.psIf,
             'for': self.psFor
+
         }
 
     # -------  Operand Stack Operators --------------
@@ -75,11 +74,16 @@ class Stacks:
        (Note: If the dictstack is empty, first adds an empty dictionary to the dictstack then adds the name:value to that.
     """
 
-    def define(self, name, value):
+    def define(self, name, value):  # probably right
         if len(self.dictstack) < 1:
-            self.dictstack.append({name: value})
+            self.dictPush((0, {}))
+            myDict = self.dictPop()
+            myDict[1][name] = value
+            self.dictPush(myDict)
         else:
-            self.dictstack[-1][name] = value
+            myDict = self.dictPop()
+            myDict[1][name] = value
+            self.dictPush(myDict)
 
     """
        Helper function. Searches the dictstack for a variable or function and returns its value.
@@ -87,15 +91,33 @@ class Stacks:
         Make sure to add '/' to the begining of the name.)
     """
 
-    def lookup(self, name):
+    def lookup(self, name):  # gonna be different
 
-        i = len(self.dictstack) - 1
+        lookUpName = '/' + name
 
-        while i >= 0:
-            if "/" + name in self.dictstack[i]:
-                return self.dictstack[i]["/" + name]
-            i -= 1
-        return None
+        if self.scopeRule == "static":
+            myDict = self.dictPop()
+            val = self.staticSearch(myDict, lookUpName)
+            self.dictPush(myDict)
+            return val
+        else:
+            myDict = self.dictstack[::-1]
+            for f in myDict:
+                if f[1].get(lookUpName) is not None:
+                    return f[1].get(lookUpName)
+
+    def staticSearch(self, myDict, lookUpName):
+        if myDict[1].get(lookUpName) is not None:
+            return myDict[1].get(lookUpName)
+        else:
+            ref = myDict[0]
+            if ref == 0:
+                d = self.dictstack[ref]
+                if d[1].get(lookUpName) is not None:
+                    return d[1].get(lookUpName)
+            else:
+                return self.staticSearch(self.dictstack[ref], lookUpName)
+            pass
 
     # ------- Arithmetic Operators --------------
 
@@ -258,9 +280,20 @@ class Stacks:
     """
 
     def stack(self):
+        print("===**opstack**===")
         reversedList = self.opstack[::-1]
         for x in reversedList:
             print(x)
+        print("===**dictstack**===")
+        count = len(self.dictstack)-1
+        reversedDict = self.dictstack[::-1]
+
+        for f in reversedDict:
+            print("----", count, "----", f[0], "----")
+            count -= 1
+            for key, val in f[1].items():
+                print(key, val, sep='   ')
+        print("=================")
     """
        Copies the top element in opstack.
     """
@@ -309,32 +342,6 @@ class Stacks:
             self.opPush(op2)
 
     """
-       Pops an integer from the opstack (size argument) and pushes an  empty dictionary onto the opstack.
-    """
-
-    def psDict(self):
-        self.opPop()
-        self.opPush({})
-
-    """
-       Pops the dictionary at the top of the opstack; pushes it to the dictstack.
-    """
-
-    def begin(self):
-        newDict = self.opPop()
-        if isinstance(newDict, dict):
-            self.dictPush(newDict)
-        else:
-            print("error, not of type dict")
-
-    """
-       Removes the top dictionary from dictstack.
-    """
-
-    def end(self):
-        self.dictPop()
-
-    """
        Pops a name and a value from opstack, adds the name:value pair to the top dictionary by calling define.
     """
 
@@ -358,7 +365,9 @@ class Stacks:
             ifBody = self.opPop()
             condition = self.opPop()
             if condition == True:
+                self.dictPush((len(self.dictstack)-1, {}))
                 ifBody.apply(self)
+                self.dictPop()
             else:
                 self.opPush(condition)
                 self.opPush(ifBody)
@@ -376,9 +385,13 @@ class Stacks:
             ifBody = self.opPop()
             condition = self.opPop()
             if condition:
+                self.dictPush((len(self.dictstack)-1, {}))
                 ifBody.apply(self)
+                self.dictPop()
             else:
+                self.dictPush((len(self.dictstack)-1, {}))
                 elseBody.apply(self)
+                self.dictPop()
         else:
             self.opPush(condition)
             self.opPush(ifBody)
@@ -402,15 +415,15 @@ class Stacks:
         if increment < 0:
             for x in range(start, end-1, increment):
                 self.opPush(x)
+                self.dictPush((len(self.dictstack)-1, {}))
                 loopbody.apply(self)
-                if (end-1 == x-1):
-                    self.opPush(x)
-                    loopbody.apply(self)
-
+                self.dictPop()
         elif increment > 0:
             for x in range(start, end+1, increment):
                 self.opPush(x)
+                self.dictPush((len(self.dictstack)-1, {}))
                 loopbody.apply(self)
+                self.dictPop()
 
             # TO-DO in part2
 

@@ -5,151 +5,124 @@ from stacks import Stacks
 from colors import *
 
 testinput1 = """
-    /x 3 def 
-    /square {dup mul} def
-    [x 1 x sub 1] /arr exch def  
-    arr 0 get dup
-    0 gt 
-    {square} {dup} ifelse
-"""
+    /x 4 def
+    /g { x stack } def
+    /f { /x 7 def g } def
+    f
+    """
+
 testinput2 = """
-    /x 1 def
-    /y 2 def
-    /x 10 def
-    /y 20 def
-    0 x 1 y {add} for
-"""
+    /x 4 def
+    (static_y) dup 7 120 put /x exch def
+    /g { x stack } def
+    /f { /x (dynamic_x) def g } def
+    f
+    """
 
 testinput3 = """
-    /f {dup length} def
-    [1 2 (322) (451) length]
-    [1 -2 4 5 add (long) length]
-    (123456)  f
-"""
+    /m 50 def
+    /n 100 def
+    /egg1 {/m 25 def n} def
+    /chic
+    	{ /n 1 def
+	      /egg2 { n stack} def
+	      m  n
+	      egg1
+	      egg2
+	    } def
+    n
+    chic
+        """
 
 testinput4 = """
-        /x 1 def
-        /y 2 def
-        1 dict begin
-        /x 10 def
-        1 dict begin /y 3 def x y end
-        /y 20 def
-        x y
-        end
-        x y
-"""
+    /x 10 def
+    /A { x } def
+    /C { /x 40 def A stack } def
+    /B { /x 30 def /A { x } def C } def
+    B
+    """
 
 testinput5 = """
-        1 2 3 4 5 count copy 15 1 1 5 {pop exch sub} for 0 eq
-"""
+    /x 2 def
+    /n 5  def
+    /A { 1  n -1 1 {pop x mul} for} def
+    /C { /n 3 def /x 40 def A stack } def
+    /B { /x 30 def /A { x } def C } def
+    B
+    """
+
 testinput6 = """
-        /str (CptS355) def 
-        /loadarr {/arr exch def 0 1 arr length 1 sub {arr exch dup str exch get put } for arr} def
-        [0 0 0 0 0 0 0] loadarr
-"""
+    /mytrue 1 1 eq def
+    /myfalse 1 2 eq def
+    /out mytrue def
+    /xand { mytrue eq {pop myfalse} {mytrue eq { myfalse } { mytrue } ifelse} ifelse dup /x exch def stack} def
+    /myput { out dup /x exch def xand } def
+    /f { /out myfalse def myput } def
+    myfalse  f
+    """
+
 testinput7 = """
-    (Vaccine)
-    dup 0  get 86 eq
-        {
-            (Vaccine) eq
-            { (yay) }
-            { (nope)  }
-            ifelse
-        } if
-"""
+    /x [1 2 3 4] def
+    /A { 0 1 x length 1 sub {x exch get} for add add add } def
+    /C { /x [10 20 30 40 50] def A stack } def
+    /B { /x [6 7 8 9] def /A { x } def C } def
+    B
+    """
 
 testinput8 = """
-        /n 5 def
-        /fact {
-            0 dict begin
-            /n exch def
-            n 2 lt
-            { 1}
-            {n 1 sub fact n mul }
-            ifelse
-            end
-        } def
-        n fact
-"""
+    /x [2 3 4 5] def
+    /a 10 def
+    /A { x } def
+    /C { /x [a 2 mul a 3 mul dup a 4 mul] def A  a x stack } def
+    /B { /x [6 7 8 9] def /A { x } def /a 5 def C } def
+    B
+    """
 testinput9 = """
-    /fact {
-            0 dict
-            begin
-                /n exch def
-                1
-                n -1 1 { mul /n n 1 sub def } for 
-            end
-        } def
-        6 fact
+    /x 3030303030 def
+    /g { y stack } def
+    /z { /y 7070077 def g } def
+    z
 """
-
 testinput10 = """
-        /loadarray {/arr exch def 0 1 arr length 1 sub {arr exch get} for } def
-        /sumArray {0 exch loadarray count n sub -1 1 {pop add} for /n n 1 add def } def
-        /x 5 def
-        /y 10 def
-        /n 1 def
-        [x y x y add] sumArray
-"""
-
+    /x 50000 def
+    /A { y } def
+    /C { /y 90 def A stack } def
+    /B { /y 150 def /A { x } def C } def
+    B
+    """
 testinput11 = """
-    [49 50 51 52 53 54]
-    [49 50 51 52 53 54] dup dup /arr1 exch def
-    (12345)
-    (12345) dup dup /str1 exch def
-    arr1 1 get
-    str1 1 get
-    eq 
-    pop
-    arr1 4 100 put
-    str1 4 100 put
-    arr1 length
-    str1 length 
-    lt
+    /q 5000000000000 def
+    /v { g stack } def
+    /z { /g 100292929299292 def v } def
+    z
 """
-testinput12 = """
-   []
-"""
-testinput13 = """ """
 
-testinput14 = """
-            (or)
-            dup 0  get 2 eq
-                {
-                    (Easy) eq
-                    { (n) }
-                    { (t)  }
-                    ifelse
-                } if
-        """
-testinput15 = """
-                10 20 90 40 50 count copy 15 60 10 50 {pop exch sub} for 1 eq
-        """
-testinput16 = """
-            /x 9 def
-            /y 9 def
-            /x 1 def
-            /y 2 def
-            0 x 1 y {add} for
-        """
 
-tests = [testinput1, testinput2, testinput3, testinput4, testinput5, testinput6,
-         testinput7, testinput8, testinput9, testinput10, testinput11, testinput12, testinput13, testinput14, testinput15, testinput16]
+tests = [testinput1, testinput2, testinput3, testinput4,
+         testinput5, testinput6, testinput7, testinput8, testinput9, testinput10, testinput11]
 
 # program start
+
 if __name__ == '__main__':
 
-    psstacks = Stacks()
+    psstacks_s = Stacks("static")
+    psstacks_d = Stacks("dynamic")
     testnum = 1
     for testcase in tests:
         try:
+            print(BOLD+BLUE+"\n-- TEST {} --".format(testnum))
             expr_list = read(testcase)
+            print(BOLD+CYAN+"\nSTATIC")
+            # interpret using static scoping rule
             for expr in expr_list:
-                expr.eval(psstacks)
-            print("--test {}--".format(testnum))
+                expr.eval(psstacks_s)
+            print(BOLD+CYAN+"\nDYNAMIC")
+            # interpret using dynamic scoping rule
+            for expr in expr_list:
+                expr.eval(psstacks_d)
             testnum += 1
-            print(CYAN+'opstack '+CEND, psstacks.opstack)
-            # print('dictstack ' , psstacks.dictstack)
-            psstacks.clearBoth()
+            # clear the Stack objects
+            psstacks_s.clearBoth()
+            psstacks_d.clearBoth()
         except (SyntaxError, NameError, TypeError, Exception) as err:
             print(type(err).__name__ + ':', err)

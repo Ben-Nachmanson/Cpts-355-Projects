@@ -128,6 +128,17 @@ class Name(Expr):
         Expr.__init__(self, var_name)
         self.var_name = var_name
 
+    def staticLink(self, psstacks):
+        # should return the index location in the ssptacks.dictstakc where var name is defined.
+        # When it looks up the dictstack it should use the static links in the lookup (FIRST VALUE in tuple)
+        name = '/' + self.var_name
+        size = len(psstacks.dictstack)
+        i = 0
+        while i < size:
+            if psstacks.dictstack[i][1].get(name) is not None:
+                return i
+            i += 1
+
     def eval(self, psstacks):
         "TO-DO (part2)"
         if (self.var_name[0] == '/'):
@@ -136,8 +147,12 @@ class Name(Expr):
             psstacks.builtin_operators.get(self.var_name)()
         else:
             val = psstacks.lookup(self.var_name)  # Might be wrong who knows
-            if(isinstance(val, FunctionBody)):  # really unsure
+            if(isinstance(val, FunctionBody)):
+                # push a new tuple to the stack
+                # find the static link - write a n
+                psstacks.dictstack.append((self.staticLink(psstacks), {}))
                 val.apply(psstacks)
+                psstacks.dictPop()
             else:
                 psstacks.opPush(val)
 
@@ -221,7 +236,7 @@ class StrConstant(Value):
             "Ouch! Cannot apply `string constant` {} ".format(self.value))
 
     def __str__(self):
-        return str(self.value)
+        return 'StrConstant {}'.format(str(self.value))
 
 # ------------------------------------------------------------
 
@@ -265,4 +280,4 @@ class FunctionBody(Value):
 
     def __str__(self):
         # definition = LambdaExpr(self.parameters, self.body)
-        return '<function {}>'.format(self.body)
+        return '<functionBody {}>'.format(self.body)
